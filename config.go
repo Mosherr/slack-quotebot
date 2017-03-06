@@ -21,7 +21,6 @@ var (
 	// integration. https://my.slack.com/services/new/slash-commands
 	token string = "QtFJq3lpxo491tdjPgJiaKRI"
 
-	// Quotes from Bob Ross. https://youtu.be/YLO7tCdBVrA
 	quotes = []string{
 		"@gardak: Hans smells.",
 		"@gardak: Greg likes men.",
