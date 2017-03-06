@@ -23,8 +23,8 @@ var (
 
 	// Quotes from Bob Ross. https://youtu.be/YLO7tCdBVrA
 	quotes = []string{
-		"Every day is a good day when you paint.",
-		"Let's build a happy little cloud.",
-		"Let's build some happy little trees.",
+		"@gardak: Hans smells.",
+		"@gardak: Greg likes men.",
+		"@dafopp: I like it in the butt.",
 	}
 )
