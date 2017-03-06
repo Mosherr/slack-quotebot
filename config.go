@@ -19,7 +19,7 @@ var (
 	// requests to the slash command come from Slack. It is provided for
 	// you by Slack when you create the Slash command as a custom
 	// integration. https://my.slack.com/services/new/slash-commands
-	token string
+	token string = "QtFJq3lpxo491tdjPgJiaKRI"
 
 	// Quotes from Bob Ross. https://youtu.be/YLO7tCdBVrA
 	quotes = []string{

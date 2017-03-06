@@ -13,6 +13,15 @@ should [install Go][go-install] and the [Go App Engine SDK][go-appengine-sdk].
 [go-install]: https://golang.org/doc/install
 [go-appengine-sdk]: https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Go
 
+## App Engine setup
+- SLACKQUOTEBOT=~/src/slackquotebot/slackquotebot-2017-03-05-15-50
+- git clone https://github.com/Mosherr/slack-quotebot.git $SLACKQUOTEBOT
+- cd $SLACKQUOTEBOT
+- git checkout master
+- goapp serve -host 0.0.0.0 $PWD
+- gcloud app create
+- goapp deploy -application slackquotebot -version 0
+
 ## Setup Slack
 
 We need to create a [new slash command][new-slash-command] custom integration.
