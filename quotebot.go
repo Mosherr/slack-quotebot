@@ -57,16 +57,22 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 
 	var resp *slashResponse
 
-	if len(parts) == 0 {
+	if len(parts) == 1 {
 		// random quote
 		resp = handleGetQuote()
 	} else {
-		partLen := len(parts)
-		switch partLen{
-			case 1:
+		cmd := parts[1]
+		switch cmd{
+			case "-addquote":
+				str := strings.Replace(cmd, "-addquote", "", -1)
 				resp = &slashResponse{
 					ResponseType: "in_channel",
-					Text:         strconv.Itoa(len(parts)),
+					Text:         str,
+				}
+			case "-getquote":
+				resp = &slashResponse{
+					ResponseType: "in_channel",
+					Text:         "getquote",
 				}
 			default:
 				resp = &slashResponse{
