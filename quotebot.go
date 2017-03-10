@@ -42,15 +42,14 @@ func init() {
 // reject the request.  To let the app know what this token is, when you create
 // the custom integration, populate the token variable in config.go.
 func handleAction(w http.ResponseWriter, r *http.Request) {
-	//if token != "" && r.PostFormValue("token") != token {
-	//	http.Error(w, "Invalid Slack token.", http.StatusBadRequest)
-	//	return
-	//}
+	if token != "" && r.PostFormValue("token") != token {
+		http.Error(w, "Invalid Slack token.", http.StatusBadRequest)
+		return
+	}
 
 	w.Header().Set("content-type", "application/json")
 
 	input := r.PostFormValue("text")
-	//parts := strings.Fields(input)
 
 	parts := strings.Split(input, "-")
 
@@ -64,8 +63,17 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 		cmd := cmdParts[0]
 		switch cmd{
 			case "-add":
-				str := strings.Replace(input, "-add", "", -1)
-				resp = handleGetQuote(str)
+				if (len(parts) != 3) {
+					// error not enough options
+					resp = &slashResponse{
+						ResponseType: "in_channel",
+						Text:         "Incorrect options to add quote.",
+					}
+				} else {
+					usr := strings.Replace(cmdParts[1], "-", "", -1)
+					str := strings.Replace(input, "-add", "", -1)
+					resp = handleAddQuote(usr, str)
+				}
 			case "-get":
 				str := strings.Replace(input, "-get", "", -1)
 				resp = handleGetQuote(str)
@@ -110,6 +118,14 @@ func handleGetQuote(usr string) (*slashResponse) {
 // username to save quote for
 // text of the quote
 // if both options are not passed error
-func handleAddQuote(w http.ResponseWriter, r *http.Request) {
+func handleAddQuote(usr string, quote string) (*slashResponse) {
 
+	result := quote + " added for user " + usr
+
+	resp := &slashResponse{
+		ResponseType: "in_channel",
+		Text:         result,
+	}
+
+	return resp
 }
