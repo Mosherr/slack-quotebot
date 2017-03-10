@@ -17,15 +17,14 @@
 package quotebot
 
 import (
-"encoding/json"
-"html/template"
-"math/rand"
-"net/http"
+	"encoding/json"
+	"html/template"
+	"math/rand"
+	"net/http"
 
-"google.golang.org/appengine"
-"google.golang.org/appengine/log"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
 	"strings"
-	"os/user"
 )
 
 type slashResponse struct {
