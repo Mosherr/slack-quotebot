@@ -64,7 +64,7 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 		cmd := cmdParts[0]
 		switch cmd{
 			case "-addquote":
-				str := strings.Replace(cmd, "-addquote", "", -1)
+				str := strings.Replace(input, "-addquote", "", -1)
 				resp = &slashResponse{
 					ResponseType: "in_channel",
 					Text:         str,
