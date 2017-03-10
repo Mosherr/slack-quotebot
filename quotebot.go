@@ -24,8 +24,6 @@ import (
 
 "google.golang.org/appengine"
 "google.golang.org/appengine/log"
-	"strings"
-	"fmt"
 )
 
 type slashResponse struct {
