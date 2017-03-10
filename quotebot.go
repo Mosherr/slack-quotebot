@@ -51,9 +51,9 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 
 	input := r.PostFormValue("text")
-	parts := strings.Fields(input)
+	//parts := strings.Fields(input)
 
-	fmt.Println(parts[0])
+	parts := strings.Split(input, "/")
 
 	resp := &slashResponse{
 		ResponseType: "in_channel",
