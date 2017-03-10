@@ -25,6 +25,7 @@ import (
 "google.golang.org/appengine"
 "google.golang.org/appengine/log"
 	"strings"
+	"strconv"
 )
 
 type slashResponse struct {
@@ -65,7 +66,7 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 			case 1:
 				resp = &slashResponse{
 					ResponseType: "in_channel",
-					Text:         "sample 1",
+					Text:         strconv.Itoa(len(parts)),
 				}
 			default:
 				resp = &slashResponse{
