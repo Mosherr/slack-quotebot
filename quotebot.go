@@ -65,7 +65,7 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 			case 1:
 				resp = &slashResponse{
 					ResponseType: "in_channel",
-					Text:         parts[1],
+					Text:         "sample 1",
 				}
 			default:
 				resp = &slashResponse{
