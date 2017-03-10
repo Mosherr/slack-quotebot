@@ -60,7 +60,8 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 		// random quote
 		resp = handleGetQuote()
 	} else {
-		cmd := parts[1]
+		cmdParts := strings.Split(input, " ")
+		cmd := cmdParts[0]
 		switch cmd{
 			case "-addquote":
 				str := strings.Replace(cmd, "-addquote", "", -1)
@@ -76,7 +77,7 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 			default:
 				resp = &slashResponse{
 					ResponseType: "in_channel",
-					Text:         input,
+					Text:         cmd,
 				}
 		}
 
