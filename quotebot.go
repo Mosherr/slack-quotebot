@@ -53,11 +53,11 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 	input := r.PostFormValue("text")
 	//parts := strings.Fields(input)
 
-	parts := strings.Split(input, "/")
+	//parts := strings.Split(input, "/")
 
 	resp := &slashResponse{
 		ResponseType: "in_channel",
-		Text:         parts[0],
+		Text:         input,
 	}
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		c := appengine.NewContext(r)
