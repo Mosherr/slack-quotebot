@@ -24,6 +24,8 @@ import (
 
 "google.golang.org/appengine"
 "google.golang.org/appengine/log"
+	"strings"
+	"fmt"
 )
 
 type slashResponse struct {
@@ -34,33 +36,51 @@ type slashResponse struct {
 var indexTmpl = template.Must(template.ParseFiles("index.html"))
 
 func init() {
-	http.HandleFunc("/", handleIndex)
-	http.HandleFunc("/quotes/random", handleRandomQuote)
+	http.HandleFunc("/", handleAction)
 }
 
-func handleIndex(w http.ResponseWriter, r *http.Request) {
-	if err := indexTmpl.Execute(w, nil); err != nil {
-		c := appengine.NewContext(r)
-		log.Errorf(c, "Error executing indexTmpl template: %s", err)
-	}
-}
-
-// handleRandomQuote returns a random quote as a Slack slash command.
-//
 // If the token parameter doesn't match the secret token provided by Slack, we
 // reject the request.  To let the app know what this token is, when you create
 // the custom integration, populate the token variable in config.go.
-//
-// Once we have verified the request is valid, we send back a random quote from
-// the quotes slice, created in config.go.
-func handleRandomQuote(w http.ResponseWriter, r *http.Request) {
-	if token != "" && r.PostFormValue("token") != token {
-		http.Error(w, "Invalid Slack token.", http.StatusBadRequest)
-		return
-	}
+func handleAction(w http.ResponseWriter, r *http.Request) {
+	//if token != "" && r.PostFormValue("token") != token {
+	//	http.Error(w, "Invalid Slack token.", http.StatusBadRequest)
+	//	return
+	//}
 
 	w.Header().Set("content-type", "application/json")
 
+	input := r.PostFormValue("text")
+	parts := strings.Fields(input)
+
+	fmt.Println(parts[0])
+
+	resp := &slashResponse{
+		ResponseType: "in_channel",
+		Text:         parts[0],
+	}
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		c := appengine.NewContext(r)
+		log.Errorf(c, "Error encoding JSON: %s", err)
+		http.Error(w, "Error encoding JSON.", http.StatusInternalServerError)
+		return
+	}
+
+	// split the input into commands
+	// commands prefixed with '-'
+
+	// -get random
+	// -get @user
+	// -add @user txt
+	//switch input {
+	
+	//}
+}
+
+// Takes an option
+// random or no option will return a random quote
+// If username is passed try to find a quote by them, if none exists return error
+func handleGetQuote(w http.ResponseWriter, r *http.Request) (*slashResponse) {
 	resp := &slashResponse{
 		ResponseType: "in_channel",
 		Text:         quotes[rand.Intn(len(quotes))],
@@ -69,6 +89,14 @@ func handleRandomQuote(w http.ResponseWriter, r *http.Request) {
 		c := appengine.NewContext(r)
 		log.Errorf(c, "Error encoding JSON: %s", err)
 		http.Error(w, "Error encoding JSON.", http.StatusInternalServerError)
-		return
 	}
+	return resp
+}
+
+// takes two options
+// username to save quote for
+// text of the quote
+// if both options are not passed error
+func handleAddQuote(w http.ResponseWriter, r *http.Request) {
+
 }
