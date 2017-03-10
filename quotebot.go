@@ -24,6 +24,7 @@ import (
 
 "google.golang.org/appengine"
 "google.golang.org/appengine/log"
+	"strings"
 )
 
 type slashResponse struct {
@@ -51,12 +52,30 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 	input := r.PostFormValue("text")
 	//parts := strings.Fields(input)
 
-	//parts := strings.Split(input, "/")
+	parts := strings.Split(input, "-")
 
-	resp := &slashResponse{
-		ResponseType: "in_channel",
-		Text:         input,
+	var resp *slashResponse
+
+	if len(parts) == 0 {
+		// random quote
+		resp = handleGetQuote()
+	} else {
+		partLen := len(parts)
+		switch partLen{
+			case 1:
+				resp = &slashResponse{
+					ResponseType: "in_channel",
+					Text:         parts[1],
+				}
+			default:
+				resp = &slashResponse{
+					ResponseType: "in_channel",
+					Text:         input,
+				}
+		}
+
 	}
+
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		c := appengine.NewContext(r)
 		log.Errorf(c, "Error encoding JSON: %s", err)
@@ -78,16 +97,12 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 // Takes an option
 // random or no option will return a random quote
 // If username is passed try to find a quote by them, if none exists return error
-func handleGetQuote(w http.ResponseWriter, r *http.Request) (*slashResponse) {
+func handleGetQuote() (*slashResponse) {
 	resp := &slashResponse{
 		ResponseType: "in_channel",
 		Text:         quotes[rand.Intn(len(quotes))],
 	}
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		c := appengine.NewContext(r)
-		log.Errorf(c, "Error encoding JSON: %s", err)
-		http.Error(w, "Error encoding JSON.", http.StatusInternalServerError)
-	}
+
 	return resp
 }
 
