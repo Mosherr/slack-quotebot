@@ -25,6 +25,7 @@ import (
 "google.golang.org/appengine"
 "google.golang.org/appengine/log"
 	"strings"
+	"os/user"
 )
 
 type slashResponse struct {
@@ -58,27 +59,19 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 
 	if len(parts) == 1 {
 		// random quote
-		resp = handleGetQuote()
+		resp = handleGetQuote("random")
 	} else {
 		cmdParts := strings.Split(input, " ")
 		cmd := cmdParts[0]
 		switch cmd{
-			case "-addquote":
-				str := strings.Replace(input, "-addquote", "", -1)
-				resp = &slashResponse{
-					ResponseType: "in_channel",
-					Text:         str,
-				}
-			case "-getquote":
-				resp = &slashResponse{
-					ResponseType: "in_channel",
-					Text:         "getquote",
-				}
+			case "-add":
+				str := strings.Replace(input, "-add", "", -1)
+				resp = handleGetQuote(str)
+			case "-get":
+				str := strings.Replace(input, "-get", "", -1)
+				resp = handleGetQuote(str)
 			default:
-				resp = &slashResponse{
-					ResponseType: "in_channel",
-					Text:         cmd,
-				}
+				resp = handleGetQuote(cmd)
 		}
 
 	}
@@ -89,25 +82,26 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error encoding JSON.", http.StatusInternalServerError)
 		return
 	}
-
-	// split the input into commands
-	// commands prefixed with '-'
-
-	// -get random
-	// -get @user
-	// -add @user txt
-	//switch input {
-	
-	//}
 }
 
-// Takes an option
-// random or no option will return a random quote
+// Takes a user to return a quote from
+// "random" will return a random quote from any user
 // If username is passed try to find a quote by them, if none exists return error
-func handleGetQuote() (*slashResponse) {
+func handleGetQuote(usr string) (*slashResponse) {
+
+	var quote string
+
+	if usr == "random" {
+		quote = quotes[rand.Intn(len(quotes))]
+	} else {
+		// Check the db
+		// If no result from the db
+		quote = "No quote found for " + usr
+	}
+
 	resp := &slashResponse{
 		ResponseType: "in_channel",
-		Text:         quotes[rand.Intn(len(quotes))],
+		Text:         quote,
 	}
 
 	return resp
