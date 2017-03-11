@@ -18,13 +18,16 @@ package quotebot
 
 import (
 	"encoding/json"
-	"html/template"
 	"math/rand"
 	"net/http"
 
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"strings"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+	"time"
+	"math"
 )
 
 type slashResponse struct {
@@ -32,10 +35,40 @@ type slashResponse struct {
 	Text         string `json:"text"`
 }
 
-var indexTmpl = template.Must(template.ParseFiles("index.html"))
+type Quote struct {
+	Id        bson.ObjectId `json:"id" bson:"_id,omitempty"`
+	User      string `json:"user"`
+	Text      string `json:"text"`
+	AddedBy   string `json:"aded_by"`
+	DateAdded time.Time `json:"date_added"`
+}
+
+const (
+	DB_NAME       = "quoteStore"
+	DB_COLLECTION = "quotes"
+)
 
 func init() {
 	http.HandleFunc("/", handleAction)
+}
+
+func ensureIndex(s *mgo.Session) {
+	session := s.Copy()
+	defer session.Close()
+
+	c := session.DB(DB_NAME).C(DB_COLLECTION)
+
+	index := mgo.Index{
+		Key:        []string{"user"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	err := c.EnsureIndex(index)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // If the token parameter doesn't match the secret token provided by Slack, we
@@ -47,6 +80,15 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	session, err := mgo.Dial("localhost")
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+	ensureIndex(session)
+
 	w.Header().Set("content-type", "application/json")
 
 	input := r.PostFormValue("text")
@@ -57,13 +99,13 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 
 	if len(parts) == 1 {
 		// random quote
-		resp = handleGetQuote("random")
+		resp = handleGetQuote("random", session)
 	} else {
 		cmdParts := strings.Split(input, " ")
 		cmd := cmdParts[0]
 		switch cmd{
-			case "-add":
-				if (len(parts) != 3) {
+			case "-a":
+				if len(parts) != 3 {
 					// error not enough options
 					resp = &slashResponse{
 						ResponseType: "in_channel",
@@ -71,14 +113,16 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 					}
 				} else {
 					usr := strings.Replace(cmdParts[1], "-", "", -1)
-					str := strings.Replace(input, "-add", "", -1)
-					resp = handleAddQuote(usr, str)
+					str := strings.Replace(input, "-a", "", -1)
+					str = strings.Replace(input, cmdParts[1], "", -1)
+					addedBy := r.PostFormValue("user_name")
+					resp = handleAddQuote(usr, str, addedBy, session)
 				}
-			case "-get":
-				str := strings.Replace(input, "-get", "", -1)
-				resp = handleGetQuote(str)
+			case "-g":
+				str := strings.Replace(input, "-g", "", -1)
+				resp = handleGetQuote(str, session)
 			default:
-				resp = handleGetQuote(cmd)
+				resp = handleGetQuote(cmd, session)
 		}
 
 	}
@@ -94,21 +138,45 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 // Takes a user to return a quote from
 // "random" will return a random quote from any user
 // If username is passed try to find a quote by them, if none exists return error
-func handleGetQuote(usr string) (*slashResponse) {
+func handleGetQuote(usr string, s *mgo.Session) (*slashResponse) {
 
-	var quote string
+	var result string
 
-	if usr == "random" {
-		quote = quotes[rand.Intn(len(quotes))]
+	session := s.Copy()
+	defer session.Close()
+
+	c := session.DB(DB_NAME).C(DB_COLLECTION)
+
+	var quote Quote
+
+	var count, err = c.Count()
+
+	if err != nil {
+		// failed to get result from db
+		result = "No quote found for" + usr
 	} else {
-		// Check the db
-		// If no result from the db
-		quote = "No quote found for " + usr
+		var randomInt = int(math.Floor( float64(rand.Int() * count )))
+
+		if usr == "random" {
+			err = c.Find(bson.M{}).Skip(randomInt).One(&quote)
+		} else {
+			err = c.Find(bson.M{"user": usr}).Skip(randomInt).One(&quote)
+		}
+
+		if err != nil {
+			// failed to get result from db
+			result = "No quote found for" + usr
+		}
+
+		if quote.User == "" {
+			// If no match from the db
+			result = "No quote found for" + usr
+		}
 	}
 
 	resp := &slashResponse{
 		ResponseType: "in_channel",
-		Text:         quote,
+		Text:         result,
 	}
 
 	return resp
@@ -118,9 +186,23 @@ func handleGetQuote(usr string) (*slashResponse) {
 // username to save quote for
 // text of the quote
 // if both options are not passed error
-func handleAddQuote(usr string, quote string) (*slashResponse) {
+func handleAddQuote(usr string, quoteText string, addedBy string, s *mgo.Session) (*slashResponse) {
+	session := s.Copy()
+	defer session.Close()
 
-	result := quote + " added for user " + usr
+	var result string
+
+	c := session.DB(DB_NAME).C(DB_COLLECTION)
+
+	insert := &Quote{User: usr, Text: quoteText, AddedBy: addedBy, DateAdded: time.Now()}
+
+	err := c.Insert(insert)
+	if err != nil {
+		// error inserting
+		result = "Failed to save quote"
+	} else {
+		result = "'" + quoteText +"'" + "added for user" + usr
+	}
 
 	resp := &slashResponse{
 		ResponseType: "in_channel",
