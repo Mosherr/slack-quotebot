@@ -44,7 +44,7 @@ type Quote struct {
 }
 
 const (
-	DB_NAME       = "quoteStore"
+	DB_NAME       = "quotestore"
 	DB_COLLECTION = "quotes"
 )
 
@@ -80,7 +80,17 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := mgo.Dial("localhost")
+	// We need this object to establish a session to our MongoDB.
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{MongoDBHosts},
+		Timeout:  60 * time.Second,
+		Database: AuthDatabase,
+		Username: AuthUserName,
+		Password: AuthPassword,
+	}
+
+	session, err := mgo.DialWithInfo(mongoDBDialInfo)
+
 	if err != nil {
 		panic(err)
 	}

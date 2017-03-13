@@ -21,9 +21,8 @@ var (
 	// integration. https://my.slack.com/services/new/slash-commands
 	token string = "QtFJq3lpxo491tdjPgJiaKRI"
 
-	quotes = []string{
-		"@gardak: Hans smells.",
-		"@gardak: Greg likes men.",
-		"@dafopp: I like it in the butt.",
-	}
+	MongoDBHosts string = "xxxxxxxxx"
+	AuthDatabase string = "xxxxxxxxx"
+	AuthUserName string = "xxxxxxxxx"
+	AuthPassword string = "xxxxxxxxx"
 )
