@@ -91,7 +91,7 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 	session, err := mgo.DialWithInfo(mongoDBDialInfo)
 
 	if err != nil {
-		log.Fatalf("CreateSession: %s\n", err)
+		panic(err)
 	}
 	defer session.Close()
 
