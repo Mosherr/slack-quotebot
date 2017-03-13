@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"math/rand"
 	"net/http"
-
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"strings"
@@ -92,7 +91,7 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 	session, err := mgo.DialWithInfo(mongoDBDialInfo)
 
 	if err != nil {
-		panic(err)
+		log.Fatalf("CreateSession: %s\n", err)
 	}
 	defer session.Close()
 

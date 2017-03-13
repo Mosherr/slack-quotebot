@@ -14,6 +14,10 @@
 
 package quotebot
 
+import (
+	"gopkg.in/mgo.v2"
+)
+
 var (
 	// Set the token variable. It is needed to verify that the
 	// requests to the slash command come from Slack. It is provided for
@@ -21,8 +25,13 @@ var (
 	// integration. https://my.slack.com/services/new/slash-commands
 	token string = "QtFJq3lpxo491tdjPgJiaKRI"
 
-	MongoDBHosts string = "xxxxxxxxx"
-	AuthDatabase string = "xxxxxxxxx"
-	AuthUserName string = "xxxxxxxxx"
-	AuthPassword string = "xxxxxxxxx"
+	// Force import of mgo library.
+	_ mgo.Session
+)
+
+const (
+	MongoDBHosts = "xxxxxx"
+	AuthDatabase = "xxxxxx"
+	AuthUserName = "xxxxxx"
+	AuthPassword = "xxxxxx"
 )
