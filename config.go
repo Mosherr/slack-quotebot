@@ -47,9 +47,9 @@ var (
 	// integration. https://my.slack.com/services/new/slash-commands
 	token string = "QtFJq3lpxo491tdjPgJiaKRI"
 
-	MongoDBHosts string = "xxxxxxx"
-	AuthUserName string = "xxxxxxx"
-	AuthPassword string = "xxxxxxx"
+	MongoDBHosts string = "ds145299.mlab.com:45299"
+	AuthUserName string = "dmscherr"
+	AuthPassword string = "xd45jEE04OVe"
 
 	DB QuoteDatabase
 
