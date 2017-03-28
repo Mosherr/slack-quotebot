@@ -1,32 +1,33 @@
-// Copyright 2016 Google Inc. All Rights Reserved.
+//Copyright 2017 Mosherr
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+//Permission is hereby granted, free of charge,
+// to any person obtaining a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction,
+// including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software,
+// and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//The above copyright notice and this permission notice shall be included in all copies
+// or substantial portions of the Software.
 //
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Package quotebot demonstrates how to create an App Engine application as a
-// Slack slash command.
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+// IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+// IN THE SOFTWARE.
 package quotebot
 
 import (
 	"encoding/json"
-	"math/rand"
 	"net/http"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"strings"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"time"
-	"math"
+	"unicode"
 )
 
 type slashResponse struct {
@@ -34,40 +35,8 @@ type slashResponse struct {
 	Text         string `json:"text"`
 }
 
-type Quote struct {
-	Id        bson.ObjectId `json:"id" bson:"_id,omitempty"`
-	User      string `json:"user"`
-	Text      string `json:"text"`
-	AddedBy   string `json:"aded_by"`
-	DateAdded time.Time `json:"date_added"`
-}
-
-const (
-	DB_NAME       = "quotestore"
-	DB_COLLECTION = "quotes"
-)
-
 func init() {
 	http.HandleFunc("/", handleAction)
-}
-
-func ensureIndex(s *mgo.Session) {
-	session := s.Copy()
-	defer session.Close()
-
-	c := session.DB(DB_NAME).C(DB_COLLECTION)
-
-	index := mgo.Index{
-		Key:        []string{"user"},
-		Unique:     true,
-		DropDups:   true,
-		Background: true,
-		Sparse:     true,
-	}
-	err := c.EnsureIndex(index)
-	if err != nil {
-		panic(err)
-	}
 }
 
 // If the token parameter doesn't match the secret token provided by Slack, we
@@ -79,39 +48,21 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// We need this object to establish a session to our MongoDB.
-	mongoDBDialInfo := &mgo.DialInfo{
-		Addrs:    []string{MongoDBHosts},
-		Timeout:  60 * time.Second,
-		Database: AuthDatabase,
-		Username: AuthUserName,
-		Password: AuthPassword,
-	}
-
-	session, err := mgo.DialWithInfo(mongoDBDialInfo)
-
-	if err != nil {
-		panic(err)
-	}
-	defer session.Close()
-
-	session.SetMode(mgo.Monotonic, true)
-	ensureIndex(session)
-
 	w.Header().Set("content-type", "application/json")
 
 	input := r.PostFormValue("text")
 
-	parts := strings.Split(input, "-")
+	parts := parseSlackInput(input)
+	var str string
+	var usr string
 
 	var resp *slashResponse
 
 	if len(parts) == 1 {
 		// random quote
-		resp = handleGetQuote("random", session)
+		resp = handleGetQuote("random")
 	} else {
-		cmdParts := strings.Split(input, " ")
-		cmd := cmdParts[0]
+		cmd := parts[0]
 		switch cmd{
 			case "-a":
 				if len(parts) != 3 {
@@ -121,17 +72,16 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 						Text:         "Incorrect options to add quote.",
 					}
 				} else {
-					usr := strings.Replace(cmdParts[1], "-", "", -1)
-					str := strings.Replace(input, "-a", "", -1)
-					str = strings.Replace(input, cmdParts[1], "", -1)
+					usr = parts[1]
+					str = parts[2]
 					addedBy := r.PostFormValue("user_name")
-					resp = handleAddQuote(usr, str, addedBy, session)
+					resp = handleAddQuote(usr, str, addedBy)
 				}
 			case "-g":
-				str := strings.Replace(input, "-g", "", -1)
-				resp = handleGetQuote(str, session)
+				usr = parts[1]
+				resp = handleGetQuote(usr)
 			default:
-				resp = handleGetQuote(cmd, session)
+				resp = handleGetQuote("random")
 		}
 
 	}
@@ -147,40 +97,24 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 // Takes a user to return a quote from
 // "random" will return a random quote from any user
 // If username is passed try to find a quote by them, if none exists return error
-func handleGetQuote(usr string, s *mgo.Session) (*slashResponse) {
+func handleGetQuote(usr string) (*slashResponse) {
 
 	var result string
 
-	session := s.Copy()
-	defer session.Close()
-
-	c := session.DB(DB_NAME).C(DB_COLLECTION)
-
-	var quote Quote
-
-	var count, err = c.Count()
+	quote, err := DB.GetQuote(usr)
 
 	if err != nil {
 		// failed to get result from db
-		result = "No quote found for" + usr
-	} else {
-		var randomInt = int(math.Floor( float64(rand.Int() * count )))
+		result = "No quote found for " + usr
+	}
 
-		if usr == "random" {
-			err = c.Find(bson.M{}).Skip(randomInt).One(&quote)
-		} else {
-			err = c.Find(bson.M{"user": usr}).Skip(randomInt).One(&quote)
-		}
+	if quote.User == "" {
+		// If no match from the db
+		result = "No quote found for " + usr
+	}
 
-		if err != nil {
-			// failed to get result from db
-			result = "No quote found for" + usr
-		}
-
-		if quote.User == "" {
-			// If no match from the db
-			result = "No quote found for" + usr
-		}
+	if len(result) == 0 {
+		result = quote.Text + " -" + quote.User
 	}
 
 	resp := &slashResponse{
@@ -191,26 +125,27 @@ func handleGetQuote(usr string, s *mgo.Session) (*slashResponse) {
 	return resp
 }
 
-// takes two options
 // username to save quote for
 // text of the quote
-// if both options are not passed error
-func handleAddQuote(usr string, quoteText string, addedBy string, s *mgo.Session) (*slashResponse) {
-	session := s.Copy()
-	defer session.Close()
+// user who added the quote
+func handleAddQuote(usr string, quoteText string, addedBy string) (*slashResponse) {
 
 	var result string
 
-	c := session.DB(DB_NAME).C(DB_COLLECTION)
+	insert := &Quote{
+		User: usr,
+		Text: quoteText,
+		AddedBy: addedBy,
+		DateAdded: time.Now(),
+	}
 
-	insert := &Quote{User: usr, Text: quoteText, AddedBy: addedBy, DateAdded: time.Now()}
+	err := DB.AddQuote(insert)
 
-	err := c.Insert(insert)
 	if err != nil {
 		// error inserting
 		result = "Failed to save quote"
 	} else {
-		result = "'" + quoteText +"'" + "added for user" + usr
+		result = quoteText + " added for user " + usr
 	}
 
 	resp := &slashResponse{
@@ -219,4 +154,28 @@ func handleAddQuote(usr string, quoteText string, addedBy string, s *mgo.Session
 	}
 
 	return resp
+}
+
+// Parse the slack input
+func parseSlackInput(text string)(parsedInput []string) {
+	lastQuote := rune(0)
+	f := func(c rune) bool {
+		switch {
+		case c == lastQuote:
+			lastQuote = rune(0)
+			return false
+		case lastQuote != rune(0):
+			return false
+		case unicode.In(c, unicode.Quotation_Mark):
+			lastQuote = c
+			return false
+		default:
+			return unicode.IsSpace(c)
+
+		}
+	}
+
+	m := strings.FieldsFunc(text, f)
+
+	return m
 }

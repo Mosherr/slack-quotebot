@@ -21,38 +21,26 @@
 package quotebot
 
 import (
-	"gopkg.in/mgo.v2"
-	"log"
+	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
-func init() {
-	var err error
-	var cred = &mgo.Credential{
-		Username:AuthUserName,
-		Password:AuthPassword,
-		Source:DB_NAME,
-	}
-
-	DB, err = newMongoDB(MongoDBHosts, cred)
-
-	if err != nil {
-		log.Fatal(err)
-	}
+// Quote holds metadata about a quote.
+type Quote struct {
+	Id        bson.ObjectId `json:"id" bson:"_id,omitempty"`
+	User      string `json:"user"`
+	Text      string `json:"text"`
+	AddedBy   string `json:"added_by"`
+	DateAdded time.Time `json:"date_added"`
 }
 
-var (
-	// Set the token variable. It is needed to verify that the
-	// requests to the slash command come from Slack. It is provided for
-	// you by Slack when you create the Slash command as a custom
-	// integration. https://my.slack.com/services/new/slash-commands
-	token string = "QtFJq3lpxo491tdjPgJiaKRI"
+// QuoteDatabase provides thread-safe access to a database of quotes.
+type QuoteDatabase interface {
+	// GetQuote retrieves a quote by its User.
+	GetQuote(usr string) (*Quote, error)
 
-	MongoDBHosts string = "xxxxxxx"
-	AuthUserName string = "xxxxxxx"
-	AuthPassword string = "xxxxxxx"
+	// AddQuote saves a given quote, assigning it a new ID.
+	AddQuote(q *Quote) (err error)
 
-	DB QuoteDatabase
-
-	// Force import of mgo library.
-	_ mgo.Session
-)
+	Close()
+}
