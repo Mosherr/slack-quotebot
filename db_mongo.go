@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 	"math/rand"
 )
 
@@ -34,7 +33,7 @@ type mongoDB struct {
 }
 
 // Ensure mongoDB conforms to the QuoteDatabase interface.
-var _ QuoteDatabase = &mongoDB{}
+var _ QuoteDatabase = (*mongoDB)(nil)
 
 const (
 	DB_NAME       = "quotestore"
@@ -51,7 +50,7 @@ func newMongoDB(addr string, cred *mgo.Credential) (QuoteDatabase, error) {
 
 	if cred != nil {
 		if err := conn.Login(cred); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("mongo: Invalid credentials: %v", err)
 		}
 	}
 
@@ -103,6 +102,5 @@ func (db *mongoDB) AddQuote(q *Quote) (err error) {
 
 // randomRecordNumber returns a positive number that fits in the bounds.
 func randomRecordNumber(min int, max int) (int) {
-	rand.Seed(time.Now().UTC().UnixNano())
 	return rand.Intn(max - min) + min
 }
