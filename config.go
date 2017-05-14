@@ -35,15 +35,12 @@ func init() {
 	// [START mongo]
 	// To use Mongo, uncomment the next lines and update the address string and
 	// optionally, the credentials
-	// DB, err = newMongoDB(MongoDBHosts, cred)
-	// var MongoDBHosts string = "xxxxxx"
-	// var AuthUserName string = "xxxxxx"
-	// var AuthPassword string = "xxxxxx"
-	// var cred = &mgo.Credential{
-	//	Username:AuthUserName,
-	//	Password:AuthPassword,
-	//	Source:DB_NAME,
-	// }
+	var cred = &mgo.Credential{
+		Username:AuthUserName,
+		Password:AuthPassword,
+		Source:DB_NAME,
+	}
+	DB, err = newMongoDB(MongoDBHosts, cred)
 	// [END mongo]
 
 	// [START datastore]
@@ -52,7 +49,7 @@ func init() {
 	// More options can be set, see the google package docs for details:
 	// http://godoc.org/golang.org/x/oauth2/google
 	//
-	DB, err = configureDatastoreDB("slackquotebot")
+	//DB, err = configureDatastoreDB("slackquotebot")
 	// [END datastore]
 
 	if err != nil {
@@ -69,6 +66,12 @@ var (
 	// you by Slack when you create the Slash command as a custom
 	// integration. https://my.slack.com/services/new/slash-commands
 	token string = "QtFJq3lpxo491tdjPgJiaKRI"
+
+	// [START mongo]
+	MongoDBHosts string = "xxxxxx"
+	AuthUserName string = "xxxxxx"
+	AuthPassword string = "xxxxxx"
+	// [END mongo]
 
 	DB QuoteDatabase
 
