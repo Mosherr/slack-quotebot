@@ -52,3 +52,9 @@ Run `/quotebot` in Slack
 - /quotebot -g (get a random quote)
 - /quotebot -g @user (get a random quote from specified user)
 - /quotebot -a @user "new quote to add" (adds a quote for a user)
+
+## References
+https://cloud.google.com/go/getting-started
+https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf
+http://blog.adjutas.com/index.php/2016/11/24/using-an-external-database-with-google-app-engine/
+https://godoc.org/cloud.google.com/go/datastore
