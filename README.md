@@ -58,3 +58,8 @@ https://cloud.google.com/go/getting-started
 https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf
 http://blog.adjutas.com/index.php/2016/11/24/using-an-external-database-with-google-app-engine/
 https://godoc.org/cloud.google.com/go/datastore
+https://cloud.google.com/datastore/docs/tools/datastore-emulator
+
+## Random Notes:
+I first tried hosting my mongo DB at mlabs and that worked fine when testing locally but i could not get it working on app engine. I ended up using bitnami since it is configured to work.
+I plan to write a post about it on my side dmscherr.com

@@ -18,16 +18,20 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
-package quotebot
+package main
 
 import (
 	"encoding/json"
 	"net/http"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/log"
 	"strings"
 	"time"
 	"unicode"
+	"os"
+	"github.com/Sirupsen/logrus"
+)
+
+var (
+	logger         = logrus.WithField("cmd", "quotebot")
 )
 
 type slashResponse struct {
@@ -35,15 +39,21 @@ type slashResponse struct {
 	Text         string `json:"text"`
 }
 
-func init() {
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		logger.WithField("PORT", port).Fatal("$PORT must be set")
+	}
+
 	http.HandleFunc("/", handleAction)
+	logger.Println(http.ListenAndServe(":"+port, nil))
 }
 
 // If the token parameter doesn't match the secret token provided by Slack, we
 // reject the request.  To let the app know what this token is, when you create
 // the custom integration, populate the token variable in config.go.
 func handleAction(w http.ResponseWriter, r *http.Request) {
-	if token != "" && r.PostFormValue("token") != token {
+	if r.PostFormValue("token") != token {
 		http.Error(w, "Invalid Slack token.", http.StatusBadRequest)
 		return
 	}
@@ -87,8 +97,6 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		c := appengine.NewContext(r)
-		log.Errorf(c, "Error encoding JSON: %s", err)
 		http.Error(w, "Error encoding JSON.", http.StatusInternalServerError)
 		return
 	}

@@ -2,11 +2,15 @@ FROM alpine:latest
 
 MAINTAINER Daniel Scherr <danscherr@gmail.com>
 
-WORKDIR "/opt"
+COPY . /app/src/github.com/mosherr/quotebot
+WORKDIR /app/src/github.com/mosherr/quotebot
 
-ADD .docker_build/quotebot /opt/bin/quotebot
-ADD ./templates /opt/templates
-ADD ./static /opt/static
+ENV HOME /app
+ENV GOVERSION=1.8
+ENV GOROOT $HOME/.go/$GOVERSION/go
+ENV GOPATH $HOME
+ENV PATH $PATH:$HOME/bin:$GOROOT/bin:$GOPATH/bin
 
-CMD ["/opt/bin/quotebot"]
-
+RUN mkdir -p $HOME/.go/$GOVERSION
+RUN cd $HOME/.go/$GOVERSION; curl -s https://storage.googleapis.com/golang/go$GOVERSION.linux-amd64.tar.gz | tar zxf -
+RUN go install -v github.com/mosherr/quotebot
