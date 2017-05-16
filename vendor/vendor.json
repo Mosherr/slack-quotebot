@@ -51,6 +51,10 @@
 			"comment": "v5.9.1",
 			"path": "gopkg.in/bluesuncorp/validator.v5",
 			"revision": "d627af88ac021317a280d320986282a6dc97549a"
+		},
+		{
+			"comment": "v2",
+			"path": "gopkg.in/mgo.v2"
 		}
 	],
 	"rootPath": "github.com/mosherr/quotebot"
