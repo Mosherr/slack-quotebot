@@ -70,7 +70,7 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 
 	//defer DB.Close()
 
-	if len(parts) == 1 {
+	if len(parts) <= 1 {
 		// random quote
 		resp = handleGetQuote("random")
 	} else {
