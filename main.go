@@ -68,7 +68,7 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 
 	var resp *slashResponse
 
-	defer DB.Close()
+	//defer DB.Close()
 
 	if len(parts) == 1 {
 		// random quote
