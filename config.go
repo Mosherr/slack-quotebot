@@ -55,8 +55,8 @@ var (
 	token string = "QtFJq3lpxo491tdjPgJiaKRI"
 
 	MongoDBHosts string = "ds145299.mlab.com:45299"
-	AuthUserName string = "dmscherr"
-	AuthPassword string = "1Bt5IDaSir1h"
+	AuthUserName string = "quotemaster"
+	AuthPassword string = "md3EKiXFZ2TA"
 
 	DB QuoteDatabase
 
