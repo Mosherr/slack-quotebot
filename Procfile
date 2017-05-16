@@ -1,1 +1,1 @@
-web: gardakquotebot
+web: quotebot
