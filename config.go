@@ -52,7 +52,7 @@ var (
 	// requests to the slash command come from Slack. It is provided for
 	// you by Slack when you create the Slash command as a custom
 	// integration. https://my.slack.com/services/new/slash-commands
-	token string = "QtFJq3lpxo491tdjPgJiaKRI"
+	token string = "xxxxxx"
 
 	MongoDBHosts string = "xxxxxx:xxxxx"
 	AuthUserName string = "xxxxxx"
