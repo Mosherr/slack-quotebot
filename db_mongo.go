@@ -101,12 +101,7 @@ func (db *mongoDB) AddQuote(q *Quote) (err error) {
 
 	err = db.c.Find(bson.M{"text":q.Text}).One(existingQuote)
 
-	if err != nil {
-		// failed to get result from db
-		return fmt.Errorf("mongodb: could not add quote: %v", err)
-	}
-
-	if (&Quote{}) == existingQuote {
+	if existingQuote.User != "" {
 		// If match from the db
 		return fmt.Errorf("Quote already exists.")
 	}
