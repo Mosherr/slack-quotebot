@@ -106,7 +106,7 @@ func (db *mongoDB) AddQuote(q *Quote) (err error) {
 		return fmt.Errorf("mongodb: could not add quote: %v", err)
 	}
 
-	if existingQuote.User != "" {
+	if (&Quote{}) == existingQuote {
 		// If match from the db
 		return fmt.Errorf("Quote already exists.")
 	}
