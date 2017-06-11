@@ -25,6 +25,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"math/rand"
+	"time"
 )
 
 type mongoDB struct {
@@ -43,7 +44,10 @@ const (
 // newMongoDB creates a new QuoteDatabase backed by a given Mongo server,
 // authenticated with given credentials.
 func newMongoDB(addr string, cred *mgo.Credential) (QuoteDatabase, error) {
-	conn, err := mgo.Dial(addr)
+	conn, err := mgo.DialWithTimeout(
+		addr,
+		60 * time.Second,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("mongo: could not dial: %v", err)
 	}
@@ -93,6 +97,20 @@ func (db *mongoDB) GetQuote(usr string) (*Quote, error) {
 
 // AddQuote saves a given quote.
 func (db *mongoDB) AddQuote(q *Quote) (err error) {
+	existingQuote := &Quote{}
+
+	err = db.c.Find(bson.M{"text":q.Text}).One(existingQuote)
+
+	if err != nil {
+		// failed to get result from db
+		return fmt.Errorf("mongodb: could not add quote: %v", err)
+	}
+
+	if existingQuote.User != "" {
+		// If match from the db
+		return fmt.Errorf("Quote already exists.")
+	}
+
 	err = db.c.Insert(q)
 	if err != nil {
 		return fmt.Errorf("mongodb: could not add quote: %v", err)

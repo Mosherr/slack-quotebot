@@ -62,13 +62,10 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 
 	input := r.PostFormValue("text")
 
-	parts := parseSlackInput(input)
+	parts := strings.SplitN(input, " ", 3)
 	var str string
 	var usr string
-
 	var resp *slashResponse
-
-	//defer DB.Close()
 
 	if len(parts) <= 1 {
 		// random quote
@@ -181,7 +178,6 @@ func parseSlackInput(text string)(parsedInput []string) {
 			return false
 		default:
 			return unicode.IsSpace(c)
-
 		}
 	}
 
