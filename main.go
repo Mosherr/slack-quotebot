@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"unicode"
 	"os"
 	"github.com/Sirupsen/logrus"
 	"strconv"
