@@ -28,6 +28,7 @@ import (
 	"unicode"
 	"os"
 	"github.com/Sirupsen/logrus"
+	"strconv"
 )
 
 var (
@@ -121,7 +122,7 @@ func handleGetQuote(usr string) (*slashResponse) {
 	}
 
 	if len(result) == 0 {
-		result = quote.Text + " -" + quote.User
+		result = strconv.Itoa(quote.InsertId) + ":" + quote.Text + " -" + quote.User
 	}
 
 	resp := &slashResponse{
@@ -161,27 +162,4 @@ func handleAddQuote(usr string, quoteText string, addedBy string) (*slashRespons
 	}
 
 	return resp
-}
-
-// Parse the slack input
-func parseSlackInput(text string)(parsedInput []string) {
-	lastQuote := rune(0)
-	f := func(c rune) bool {
-		switch {
-		case c == lastQuote:
-			lastQuote = rune(0)
-			return false
-		case lastQuote != rune(0):
-			return false
-		case unicode.In(c, unicode.Quotation_Mark):
-			lastQuote = c
-			return false
-		default:
-			return unicode.IsSpace(c)
-		}
-	}
-
-	m := strings.FieldsFunc(text, f)
-
-	return m
 }
