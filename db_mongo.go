@@ -27,7 +27,6 @@ import (
 	"math/rand"
 	"time"
 	"strconv"
-	"go/doc"
 )
 
 type mongoDB struct {
