@@ -32,6 +32,7 @@ type Quote struct {
 	Text      string `json:"text"`
 	AddedBy   string `json:"added_by"`
 	DateAdded time.Time `json:"date_added"`
+	InsertId  int  `json:"insert_id"`
 }
 
 // QuoteDatabase provides thread-safe access to a database of quotes.

@@ -26,11 +26,20 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"math/rand"
 	"time"
+	"strconv"
+	"go/doc"
 )
 
 type mongoDB struct {
-	conn *mgo.Session
-	c    *mgo.Collection
+	conn    *mgo.Session
+	c       *mgo.Collection
+	counter *mgo.Collection
+}
+
+// Quote holds metadata about a counter.
+type Counter struct {
+	Id        bson.ObjectId `json:"id"`
+	Seq       int `json:"seq"`
 }
 
 // Ensure mongoDB conforms to the QuoteDatabase interface.
@@ -39,6 +48,7 @@ var _ QuoteDatabase = (*mongoDB)(nil)
 const (
 	DB_NAME       = "quotestore"
 	DB_COLLECTION = "quotes"
+	DB_COUNTER    = "counters"
 )
 
 // newMongoDB creates a new QuoteDatabase backed by a given Mongo server,
@@ -46,7 +56,7 @@ const (
 func newMongoDB(addr string, cred *mgo.Credential) (QuoteDatabase, error) {
 	conn, err := mgo.DialWithTimeout(
 		addr,
-		60 * time.Second,
+		60*time.Second,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("mongo: could not dial: %v", err)
@@ -59,8 +69,9 @@ func newMongoDB(addr string, cred *mgo.Credential) (QuoteDatabase, error) {
 	}
 
 	return &mongoDB{
-		conn: conn,
-		c:    conn.DB(DB_NAME).C(DB_COLLECTION),
+		conn:    conn,
+		c:       conn.DB(DB_NAME).C(DB_COLLECTION),
+		counter: conn.DB(DB_NAME).C(DB_COUNTER),
 	}, nil
 }
 
@@ -75,8 +86,13 @@ func (db *mongoDB) GetQuote(usr string) (*Quote, error) {
 
 	var err error
 	var count int
+	var insertId int
 
-	if usr == "random" {
+	insertId, err = strconv.Atoi(usr)
+
+	if insertId != 0 {
+		err = db.c.Find(bson.M{"insertId": insertId}).One(q)
+	} else if usr == "random" {
 		count, err = db.c.Count()
 		if count > 0 {
 			err = db.c.Find(bson.M{}).Skip(randomRecordNumber(0, count)).One(q)
@@ -99,12 +115,20 @@ func (db *mongoDB) GetQuote(usr string) (*Quote, error) {
 func (db *mongoDB) AddQuote(q *Quote) (err error) {
 	existingQuote := &Quote{}
 
-	err = db.c.Find(bson.M{"text":q.Text}).One(existingQuote)
+	err = db.c.Find(bson.M{"text": q.Text}).One(existingQuote)
 
 	if existingQuote.User != "" {
 		// If match from the db
 		return fmt.Errorf("Quote already exists.")
 	}
+
+	var InsertId int
+	InsertId, err = getNextSequence(db)
+
+	if err != nil {
+		return fmt.Errorf("mongodb: could not add quote: %v", err)
+	}
+	q.InsertId = InsertId
 
 	err = db.c.Insert(q)
 	if err != nil {
@@ -115,5 +139,22 @@ func (db *mongoDB) AddQuote(q *Quote) (err error) {
 
 // randomRecordNumber returns a positive number that fits in the bounds.
 func randomRecordNumber(min int, max int) (int) {
-	return rand.Intn(max - min) + min
+	return rand.Intn(max-min) + min
+}
+
+// Gets the next Sequence form the counter collection to use as insertId
+func getNextSequence(db *mongoDB) (int, error) {
+	counter := &Counter{}
+
+	change := mgo.Change{
+		Update: bson.M{"$inc": bson.M{"seq": 1}},
+		ReturnNew: false,
+	}
+	_, err := db.counter.Find(bson.M{"_id": "quoteInsertId"}).Apply(change, &counter)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return counter.Seq, nil
 }
