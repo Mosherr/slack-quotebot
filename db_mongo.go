@@ -152,7 +152,7 @@ func getNextSequence(db *mongoDB) (int, error) {
 	_, err := db.counter.Find(bson.M{"_id": "quoteInsertId"}).Apply(change, &counter)
 
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	return counter.Seq, nil
