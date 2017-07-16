@@ -90,7 +90,7 @@ func (db *mongoDB) GetQuote(usr string) (*Quote, error) {
 	insertId, err = strconv.Atoi(usr)
 
 	if insertId != 0 {
-		err = db.c.Find(bson.M{"insertId": insertId}).One(q)
+		err = db.c.Find(bson.M{"insertid": insertId}).One(q)
 	} else if usr == "random" {
 		count, err = db.c.Count()
 		if count > 0 {
