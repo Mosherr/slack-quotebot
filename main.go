@@ -112,7 +112,7 @@ func handleGetQuote(usr string) (*slashResponse) {
 
 	if err != nil {
 		// failed to get result from db
-		result = "No quote found for " + usr
+		result = "No quote found for " + usr + err.Error()
 	}
 
 	if quote.User == "" {
