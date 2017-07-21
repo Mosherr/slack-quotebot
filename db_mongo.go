@@ -125,7 +125,7 @@ func (db *mongoDB) AddQuote(q *Quote) (err error) {
 	InsertId, err = getNextSequence(db)
 
 	if err != nil {
-		return fmt.Errorf("mongodb: could not add quote: %v", err)
+		return fmt.Errorf("mongodb: could not get a new insertId: %v", err)
 	}
 	q.InsertId = InsertId
 
@@ -149,7 +149,7 @@ func getNextSequence(db *mongoDB) (int, error) {
 		Update: bson.M{"$inc": bson.M{"seq": 1}},
 		ReturnNew: false,
 	}
-	_, err := db.counter.Find(bson.M{"_id": "quoteInsertId"}).Apply(change, &counter)
+	_, err := db.counter.Find(bson.M{"_id": "quoteInsertId"}).Apply(change, counter)
 
 	if err != nil {
 		return 0, err

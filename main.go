@@ -150,7 +150,7 @@ func handleAddQuote(usr string, quoteText string, addedBy string) (*slashRespons
 
 	if err != nil {
 		// error inserting
-		result = "Failed to save quote"
+		result = err.Error()
 	} else {
 		result = quoteText + " added for user " + usr
 	}
